@@ -1,5 +1,5 @@
 
-console.log("🔥 ESTE ES EL app.js CORRECTO");
+console.log(" ESTE ES EL app.js CORRECTO");
 require("dotenv").config();
 
 const express = require("express");
