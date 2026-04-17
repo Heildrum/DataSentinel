@@ -21,7 +21,7 @@ async function obtenerProducto(id, accessToken) {
 
   const data = await response.json();
 
-  // 🔴 Error devuelto por MercadoLibre
+  //  Error devuelto por MercadoLibre
   if (!response.ok) {
     const mapped = mapMercadoLibreError(data.error);
 
@@ -34,7 +34,7 @@ async function obtenerProducto(id, accessToken) {
     };
   }
 
-  // ✅ Respuesta limpia y controlada
+  //  Respuesta limpia y controlada
   return {
     price: data.price,
     sku: data.seller_custom_field || null,
