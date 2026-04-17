@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Auditoría Mercado Libre PRO</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-5">
+  <div class="card shadow p-4">
+
+    <h2 class="text-center mb-4">📊 Auditoría Mercado Libre PRO</h2>
+
+    <!-- ========================= -->
+    <!-- CUENTA MERCADO LIBRE -->
+    <!-- ========================= -->
+    <div class="mb-4">
+      <label class="form-label fw-semibold">Cuenta Mercado Libre</label>
+
+      <div class="d-flex gap-2">
+        <select id="mlAccountSelect" class="form-select">
+          <option value="">-- Selecciona una cuenta --</option>
+        </select>
+
+        <button
+          type="button"
+          id="btnLoadAccounts"
+          class="btn btn-outline-secondary"
+        >
+          🔄 Listar cuentas
+        </button>
+      </div>
+
+      <small class="text-muted">
+        Solo se mostrarán cuentas que hayan autorizado la aplicación
+      </small>
+    </div>
+
+    <!-- ========================= -->
+    <!-- FORM -->
+    <!-- ========================= -->
+    <form id="formUpload">
+      <div class="mb-3">
+        <label class="form-label">Subir Excel (SKU, price, description)</label>
+        <input
+          type="file"
+          id="fileInput"
+          class="form-control"
+          accept=".xlsx,.xls"
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">
+        🚀 Auditar productos
+      </button>
+    </form>
+
+    <!-- ========================= -->
+    <!-- LOADING -->
+    <!-- ========================= -->
+    <div id="loading" class="text-center mt-3 d-none">
+      <div class="spinner-border text-primary"></div>
+      <p>Analizando productos en Mercado Libre...</p>
+    </div>
+
+    <!-- ========================= -->
+    <!-- RESULTADOS -->
+    <!-- ========================= -->
+    <div id="resultado" class="mt-4"></div>
+
+  </div>
+</div>
+
+<script>
+const form = document.getElementById("formUpload");
+const fileInput = document.getElementById("fileInput");
+const loading = document.getElementById("loading");
+const resultado = document.getElementById("resultado");
+
+const mlAccountSelect = document.getElementById("mlAccountSelect");
+const btnLoadAccounts = document.getElementById("btnLoadAccounts");
+
+const API_URL = "/auditar";
+
+// ===============================
+// LISTAR CUENTAS MERCADO LIBRE
+// ===============================
+btnLoadAccounts.addEventListener("click", async () => {
+  try {
+    const res = await fetch("/api/accounts");
+    const data = await res.json();
+
+    mlAccountSelect.innerHTML =
+      '<option value="">-- Selecciona una cuenta --</option>';
+
+    if (!data.accounts || data.accounts.length === 0) {
+      alert("No hay cuentas conectadas");
+      return;
+    }
+
+    data.accounts.forEach(acc => {
+      const opt = document.createElement("option");
+      opt.value = acc.account_id;
+      opt.textContent = acc.nickname;
+      mlAccountSelect.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Error al cargar las cuentas de Mercado Libre");
+  }
+});
+
+// ===============================
+// SUBMIT AUDITORÍA
+// ===============================
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  // ✅ Validaciones obligatorias
+  if (!mlAccountSelect.value) {
+    resultado.innerHTML = `
+      <div class="alert alert-warning">
+        Debes seleccionar una cuenta de Mercado Libre
+      </div>
+    `;
+    return;
+  }
+
+  if (!fileInput.files.length) {
+    resultado.innerHTML = `
+      <div class="alert alert-warning">
+        Debes seleccionar un archivo Excel
+      </div>
+    `;
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", fileInput.files[0]);
+  formData.append("account_id", mlAccountSelect.value);
+
+  loading.classList.remove("d-none");
+  resultado.innerHTML = "";
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: formData
+    });
+
+    if (!res.ok) {
+      throw new Error("Error del servidor");
+    }
+
+    const data = await res.json();
+    loading.classList.add("d-none");
+
+    if (!data.ok) {
+      resultado.innerHTML = `
+        <div class="alert alert-danger">
+          No se pudo procesar el archivo Excel
+        </div>
+      `;
+      return;
+    }
+
+    if (!data.resultados || data.resultados.length === 0) {
+      resultado.innerHTML = `
+        <div class="alert alert-warning">
+          El Excel fue cargado, pero no hay resultados para auditar
+        </div>
+      `;
+      return;
+    }
+
+    // ✅ Render resultados (tu lógica intacta)
+    let html = `
+      <div class="mb-3">
+        <strong>Total analizados:</strong> ${data.resultados.length}
+      </div>
+
+      <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>SKU Excel</th>
+            <th>SKU ML</th>
+            <th>Precio Excel</th>
+            <th>Precio ML</th>
+            <th>Descripción Excel</th>
+            <th>Descripción ML</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    data.resultados.forEach(item => {
+      html += `
+        <tr class="${item.error ? 'table-danger' : 'table-success'}">
+          <td>${item.id ?? '-'}</td>
+          <td>${item.sku_excel ?? '-'}</td>
+          <td>${item.sku_ml ?? '-'}</td>
+          <td>${item.price_excel ?? '-'}</td>
+          <td>${item.price_ml ?? '-'}</td>
+          <td>${(item.desc_excel ?? '-').substring(0,30)}...</td>
+          <td>${(item.desc_ml ?? '-').substring(0,30)}...</td>
+          <td>${item.error ? '❌ Diferencias' : '✔ OK'}</td>
+        </tr>
+      `;
+    });
+
+    html += "</tbody></table></div>";
+    resultado.innerHTML = html;
+
+  } catch (err) {
+    console.error(err);
+    loading.classList.add("d-none");
+
+    resultado.innerHTML = `
+      <div class="alert alert-danger">
+        Error al enviar el archivo o conectar con el servidor
+      </div>
+    `;
+  }
+});
+</script>
+
+</body>
+</html>
