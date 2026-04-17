@@ -30,7 +30,7 @@
           id="btnLoadAccounts"
           class="btn btn-outline-secondary"
         >
-          🔄 Listar cuentas
+           Listar cuentas
         </button>
       </div>
 
@@ -54,7 +54,7 @@
       </div>
 
       <button type="submit" class="btn btn-primary w-100">
-        🚀 Auditar productos
+         Auditar productos
       </button>
     </form>
 
@@ -120,7 +120,7 @@ btnLoadAccounts.addEventListener("click", async () => {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  // ✅ Validaciones obligatorias
+  //  Validaciones obligatorias
   if (!mlAccountSelect.value) {
     resultado.innerHTML = `
       <div class="alert alert-warning">
@@ -177,7 +177,7 @@ form.addEventListener("submit", async (e) => {
       return;
     }
 
-    // ✅ Render resultados (tu lógica intacta)
+    //  Render resultados (tu lógica intacta)
     let html = `
       <div class="mb-3">
         <strong>Total analizados:</strong> ${data.resultados.length}
@@ -210,7 +210,7 @@ form.addEventListener("submit", async (e) => {
           <td>${item.price_ml ?? '-'}</td>
           <td>${(item.desc_excel ?? '-').substring(0,30)}...</td>
           <td>${(item.desc_ml ?? '-').substring(0,30)}...</td>
-          <td>${item.error ? '❌ Diferencias' : '✔ OK'}</td>
+          <td>${item.error ? ' Diferencias' : '✔ OK'}</td>
         </tr>
       `;
     });
