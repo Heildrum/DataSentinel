@@ -1,7 +1,7 @@
 
 // services/Cuentas.js
 
-// ⚠️ Almacenamiento en memoria (temporal)
+// Almacenamiento en memoria (temporal)
 
 const accounts = [];
 
@@ -13,7 +13,7 @@ function saveAccount(account) {
   }
 }
 
-// ✅ CUENTA DE PRUEBA (SOLO PARA DESARROLLO)
+//  CUENTA DE PRUEBA (SOLO PARA DESARROLLO)
 saveAccount({
   account_id: "test-ml-001",
   ml_user_id: "test-ml-001",
