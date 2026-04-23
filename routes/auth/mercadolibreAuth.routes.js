@@ -1,9 +1,5 @@
-
-
 const express = require("express");
 const router = express.Router();
-
-// 👉 Servicio de cuentas (el que creaste)
 const cuentasService = require("../../services/Cuentas");
 
 // ✅ Callback OAuth de MercadoLibre
@@ -31,7 +27,7 @@ router.get("/mercadolibre/callback", async (req, res) => {
           client_id: process.env.CLIENT_ID,
           client_secret: process.env.CLIENT_SECRET,
           code,
-          redirect_uri: process.env.REDIRECT_URI
+          redirect_uri: process.env.REDIRECT_URI // 👈 Asegúrate que esta ENV termine en /mercadolibre/callback
         })
       }
     );
@@ -39,26 +35,16 @@ router.get("/mercadolibre/callback", async (req, res) => {
     const tokenData = await tokenResponse.json();
 
     if (!tokenData.access_token) {
-      return res.status(400).json({
-        ok: false,
-        message: "No se pudo obtener access token",
-        data: tokenData
-      });
+      return res.status(400).json({ ok: false, message: "Error en tokenData", data: tokenData });
     }
 
-    // 2️⃣ Obtener datos básicos del usuario ML
-    const userResponse = await fetch(
-      `https://api.mercadolibre.com/users/me`,
-      {
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`
-        }
-      }
-    );
-
+    // 2️⃣ Obtener datos básicos del usuario ML (Para tener el Nickname real)
+    const userResponse = await fetch(`https://api.mercadolibre.com/users/me`, {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` }
+    });
     const userData = await userResponse.json();
 
-    // 3️⃣ Guardar cuenta autorizada
+    // 3️⃣ Guardar cuenta autorizada en tu Array (vía Servicio)
     cuentasService.saveAccount({
       account_id: userData.id.toString(),
       ml_user_id: userData.id.toString(),
@@ -68,25 +54,14 @@ router.get("/mercadolibre/callback", async (req, res) => {
       expires_in: tokenData.expires_in
     });
 
-    // 4️⃣ Responder OK
-    res.json({
-      ok: true,
-      message: "Cuenta Mercado Libre conectada correctamente",
-      account: {
-        id: userData.id,
-        nickname: userData.nickname
-      }
-    });
+    // 4️⃣ REDIRECCIÓN AL DASHBOARD (Cambio clave)
+    // En lugar de enviar un JSON, devolvemos al usuario a tu index.html
+    res.redirect('/'); 
 
   } catch (error) {
     console.error("Error OAuth:", error);
-
-    res.status(500).json({
-      ok: false,
-      message: "Error procesando autorización de Mercado Libre"
-    });
+    res.status(500).send("Error procesando autorización. Revisa la consola.");
   }
 });
 
 module.exports = router;
-``
